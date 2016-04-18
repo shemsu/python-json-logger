@@ -56,12 +56,15 @@ class JsonFormatter(logging.Formatter):
         :param json_default: a function for encoding non-standard objects
             as outlined in http://docs.python.org/2/library/json.html
         :param json_encoder: optional custom encoder
+        :param static_fields: a dictionary of static fields with values
+        :param custom_format_field_names: a mapping of standard format field names to the custom ones
         :param prefix: an optional string prefix added at the beginning of
             the formatted string
         """
         self.json_default = kwargs.pop("json_default", None)
         self.json_encoder = kwargs.pop("json_encoder", None)
         self.static_fields = kwargs.pop("static_fields", dict())
+        self.custom_format_field_names = kwargs.pop("custom_format_field_names", dict())
         self.prefix = kwargs.pop("prefix", "")
         logging.Formatter.__init__(self, *args, **kwargs)
         if not self.json_encoder and not self.json_default:
@@ -94,20 +97,13 @@ class JsonFormatter(logging.Formatter):
         return standard_formatters.findall(self._fmt)
 
     def add_fields(self, log_record, record, message_dict):
-        """
-        Override this method to implement custom logic for adding fields.
-        """
         for field in self._required_fields:
-            log_record[field] = record.__dict__.get(field)
+            log_record[self.custom_format_field_names.get(field, field)] = record.__dict__.get(field)
         log_record.update(self.static_fields)
         log_record.update(message_dict)
         merge_record_extra(record, log_record, reserved=self._skip_fields)
 
     def process_log_record(self, log_record):
-        """
-        Override this method to implement custom logic
-        on the possibly ordered dictionary.
-        """
         return log_record
 
     def jsonify_log_record(self, log_record):
