@@ -61,8 +61,8 @@ class JsonFormatter(logging.Formatter):
         """
         self.json_default = kwargs.pop("json_default", None)
         self.json_encoder = kwargs.pop("json_encoder", None)
+        self.static_fields = kwargs.pop("static_fields", dict())
         self.prefix = kwargs.pop("prefix", "")
-        #super(JsonFormatter, self).__init__(*args, **kwargs)
         logging.Formatter.__init__(self, *args, **kwargs)
         if not self.json_encoder and not self.json_default:
             def _default_json_handler(obj):
@@ -99,6 +99,7 @@ class JsonFormatter(logging.Formatter):
         """
         for field in self._required_fields:
             log_record[field] = record.__dict__.get(field)
+        log_record.update(self.static_fields)
         log_record.update(message_dict)
         merge_record_extra(record, log_record, reserved=self._skip_fields)
 
